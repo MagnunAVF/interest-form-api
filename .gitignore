@@ -26,3 +26,6 @@ target
 # Environment variables
 .env
 !.env.sample
+
+# dynamodb
+dynamodb_data

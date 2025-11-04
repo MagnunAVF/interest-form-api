@@ -1,65 +1,71 @@
-use lambda_http::{Body, Error, Request, RequestExt, Response};
+use lambda_http::{tracing, Body, Error, Request, Response};
 
-/// This is the main body for the function.
-/// Write your code inside it.
-/// There are some code example in the following URLs:
-/// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
+use crate::{
+    db::add_interest,
+    models::{Interest, InterestFormData}
+};
+
 pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
-    // Extract some useful information from the request
-    let who = event
-        .query_string_parameters_ref()
-        .and_then(|params| params.first("name"))
-        .unwrap_or("world");
-    let message = format!("Hello {who}, this is an AWS Lambda HTTP request");
-
-    // Return something that implements IntoResponse.
-    // It will be serialized to the right response event automatically by the runtime
-    let resp = Response::builder()
-        .status(200)
-        .header("content-type", "text/html")
-        .body(message.into())
-        .map_err(Box::new)?;
-    Ok(resp)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use lambda_http::{Request, RequestExt};
-    use std::collections::HashMap;
-
-    #[tokio::test]
-    async fn test_generic_http_handler() {
-        let request = Request::default();
-
-        let response = function_handler(request).await.unwrap();
-        assert_eq!(response.status(), 200);
-
-        let body_bytes = response.body().to_vec();
-        let body_string = String::from_utf8(body_bytes).unwrap();
-
-        assert_eq!(
-            body_string,
-            "Hello world, this is an AWS Lambda HTTP request"
-        );
+    // check request method and uri
+    if event.method() != "POST" || event.uri().path() != "/interests" {
+        tracing::debug!("Method Not Allowed. Method: {}, Path: {}", event.method(), event.uri().path());
+        return Ok(Response::builder()
+            .status(405)
+            .body("Method Not Allowed".into())
+            .expect("Failed to render response"));
     }
 
-    #[tokio::test]
-    async fn test_http_handler_with_query_string() {
-        let mut query_string_parameters: HashMap<String, String> = HashMap::new();
-        query_string_parameters.insert("name".into(), "interest-form-api".into());
+    // get request body
+    let body = match event.body() {
+        Body::Text(text) => text,
+        Body::Empty => {
+            tracing::debug!("Request body is missing");
+            return Ok(Response::builder()
+                .status(400)
+                .body("Request body is missing".into())
+                .expect("Failed to render response"));
+        }
+        _ => {
+            tracing::debug!("Invalid request body");
+            return Ok(Response::builder()
+                .status(400)
+                .body("Invalid request body".into())
+                .expect("Failed to render response"));
+        }
+    };
 
-        let request = Request::default().with_query_string_parameters(query_string_parameters);
+    // parse body data
+    let interest_data: InterestFormData = match serde_json::from_str(body) {
+        Ok(data) => data,
+        Err(error) => {
+            tracing::debug!("Invalid JSON. Error: {}", error);
+            return Ok(Response::builder()
+                .status(400)
+                .body("Invalid JSON".into())
+                .expect("Failed to render response"));
+        }
+    };
 
-        let response = function_handler(request).await.unwrap();
-        assert_eq!(response.status(), 200);
-
-        let body_bytes = response.body().to_vec();
-        let body_string = String::from_utf8(body_bytes).unwrap();
-
-        assert_eq!(
-            body_string,
-            "Hello interest-form-api, this is an AWS Lambda HTTP request"
-        );
+    // insert data into database
+    let interest = Interest {
+        id: uuid::Uuid::new_v4().to_string(),
+        name: interest_data.name.clone(),
+        email: interest_data.email.clone(),
+        created_at: chrono::Utc::now().to_rfc3339(),
+    };
+    if let Err(e) = add_interest(interest.clone()).await {
+        tracing::debug!("Failed to add interest. Error: {}", e);
+        return Ok(Response::builder()
+            .status(500)
+            .body("Internal Server Error".into())
+            .expect("Failed to render response"));
     }
+
+    tracing::info!("Interest added successfully: {:#?}", interest);
+
+    // create response
+    Ok(Response::builder()
+        .status(201)
+        .body(Body::Empty)
+        .expect("Failed to render response"))
 }

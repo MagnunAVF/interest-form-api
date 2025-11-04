@@ -1,9 +1,18 @@
-use lambda_http::{run, service_fn, tracing, Error};
-mod aws;
-mod http_handler;
 use http_handler::function_handler;
+use lambda_http::{run, service_fn, tracing, Error};
 
-const ENV_VARS: [&str; 3] = ["ENV", "RUST_LOG", "RUST_BACKTRACE"];
+mod aws;
+mod db;
+mod http_handler;
+mod models;
+
+const ENV_VARS: [&str; 5] = [
+    "ENV",
+    "RUST_LOG",
+    "RUST_BACKTRACE",
+    "INTERESTS_TABLE_NAME",
+    "CUSTOM_AWS_REGION",
+];
 
 fn list_env_infos() {
     for &key in &ENV_VARS {
