@@ -1,4 +1,5 @@
 use lambda_http::{run, service_fn, tracing, Error};
+mod aws;
 mod http_handler;
 use http_handler::function_handler;
 
@@ -20,6 +21,8 @@ async fn main() -> Result<(), Error> {
     tracing::debug!("[FUNCTION] Starting api in debug mode in app!");
 
     list_env_infos();
+
+    aws::init_aws_config().await;
 
     run(service_fn(function_handler)).await
 }
