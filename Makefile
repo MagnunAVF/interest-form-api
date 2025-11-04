@@ -7,7 +7,15 @@ ifneq (,$(wildcard ./.env))
 endif
 
 run:
+	make start-localhost-db
 	cargo lambda watch
+
+start-localhost-db:
+	./scripts/start-localhost-db.sh
+	./scripts/create-db-table.sh
+
+stop-localhost-db:
+	./scripts/stop-localhost-db.sh
 
 test:
 	cargo test
