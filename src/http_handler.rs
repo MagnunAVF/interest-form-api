@@ -8,7 +8,7 @@ use crate::{
 pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     // check request method and uri
     if event.method() != "POST" || event.uri().path() != "/interests" {
-        tracing::debug!("Method Not Allowed. Method: {}, Path: {}", event.method(), event.uri().path());
+        tracing::info!("Method Not Allowed. Method: {}, Path: {}", event.method(), event.uri().path());
         return Ok(Response::builder()
             .status(405)
             .body("Method Not Allowed".into())
@@ -19,14 +19,14 @@ pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, E
     let body = match event.body() {
         Body::Text(text) => text,
         Body::Empty => {
-            tracing::debug!("Request body is missing");
+            tracing::info!("Request body is missing");
             return Ok(Response::builder()
                 .status(400)
                 .body("Request body is missing".into())
                 .expect("Failed to render response"));
         }
         _ => {
-            tracing::debug!("Invalid request body");
+            tracing::info!("Invalid request body");
             return Ok(Response::builder()
                 .status(400)
                 .body("Invalid request body".into())
@@ -38,7 +38,7 @@ pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, E
     let interest_data: InterestFormData = match serde_json::from_str(body) {
         Ok(data) => data,
         Err(error) => {
-            tracing::debug!("Invalid JSON. Error: {}", error);
+            tracing::error!("Invalid JSON. Error: {}", error);
             return Ok(Response::builder()
                 .status(400)
                 .body("Invalid JSON".into())
@@ -54,7 +54,7 @@ pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, E
         created_at: chrono::Utc::now().to_rfc3339(),
     };
     if let Err(e) = add_interest(interest.clone()).await {
-        tracing::debug!("Failed to add interest. Error: {}", e);
+        tracing::error!("Failed to add interest. Error: {}", e);
         return Ok(Response::builder()
             .status(500)
             .body("Internal Server Error".into())

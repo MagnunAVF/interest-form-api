@@ -17,8 +17,8 @@ const ENV_VARS: [&str; 5] = [
 fn list_env_infos() {
     for &key in &ENV_VARS {
         match std::env::var(key) {
-            Ok(val) => tracing::info!("[ENV VARS] {} = {}", key, val),
-            Err(_) => tracing::info!("[ENV VARS] {} not set", key),
+            Ok(val) => tracing::debug!("[ENV VARS] {} = {}", key, val),
+            Err(_) => tracing::debug!("[ENV VARS] {} not set", key),
         }
     }
 }
