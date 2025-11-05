@@ -20,20 +20,24 @@ build-arm:
 	cargo lambda build --release --arm64
 
 deploy-hml:
+	$(eval IAM_ROLE_ARN := $(shell cd terraform && terraform output -raw lambda_execution_role_arn))
 	cargo lambda deploy \
 	--region us-east-1 \
 	--env-file .env.hml \
 	--memory 128 \
 	--timeout 30 \
+	--iam-role $(IAM_ROLE_ARN) \
 	--binary-name $(PROJECT_NAME) \
 	hml-$(PROJECT_NAME)
 
 deploy-prod:
+	$(eval IAM_ROLE_ARN := $(shell cd terraform && terraform output -raw lambda_execution_role_arn))
 	cargo lambda deploy \
 	--region us-east-1 \
 	--env-file .env.prod \
 	--memory 128 \
 	--timeout 30 \
+	--iam-role $(IAM_ROLE_ARN) \
 	--binary-name $(PROJECT_NAME) \
 	prod-$(PROJECT_NAME)
 
