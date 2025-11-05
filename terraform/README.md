@@ -15,6 +15,8 @@ Template: `environment/ENV/terraform.tfvars`
 ```hcl
 project_name = "MY_PROJECT_NAME"
 region = "MY_REGION"
+lambda_function_arn = "arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME"
+lambda_function_name = "FUNCTION_NAME"
 ```
 
 Template: `environment/ENV/backend.tfvars`
