@@ -24,8 +24,8 @@ target
 .DS_Store
 
 # Environment variables
-.env
 !.env.sample
+.env*
 
 # dynamodb
 dynamodb_data

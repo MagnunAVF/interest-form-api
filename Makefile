@@ -1,14 +1,7 @@
 PROJECT_NAME = interest-form-api
 
-# Include .env file and export all variables
-ifneq (,$(wildcard ./.env))
-	include .env
-	export
-endif
-
 run:
-	make start-localhost-db
-	cargo lambda watch
+	if [ -f .env ]; then export $$(cat .env | xargs) && make start-localhost-db && cargo lambda watch; else make start-localhost-db && cargo lambda watch; fi
 
 start-localhost-db:
 	./scripts/start-localhost-db.sh
@@ -23,16 +16,34 @@ test:
 build:
 	cargo lambda build --release
 
-build-mac:
+build-arm:
 	cargo lambda build --release --arm64
 
-ci-deploy-hml:
-	cargo lambda deploy --region us-east-1 --binary-name interest-form-api hml-interest-form-api
+deploy-hml:
+	cargo lambda deploy \
+	--region us-east-1 \
+	--env-file .env.hml \
+	--memory 128 \
+	--timeout 30 \
+	--binary-name $(PROJECT_NAME) \
+	hml-$(PROJECT_NAME)
 
-ci-deploy-prod:
-	cargo lambda deploy --region us-east-1 --binary-name interest-form-api prod-interest-form-api
+deploy-prod:
+	cargo lambda deploy \
+	--region us-east-1 \
+	--env-file .env.prod \
+	--memory 128 \
+	--timeout 30 \
+	--binary-name $(PROJECT_NAME) \
+	prod-$(PROJECT_NAME)
 
 clean:
 	cargo clean
+
+destroy-prod:
+	aws lambda delete-function --function-name prod-$(PROJECT_NAME) --region us-east-1
+
+destroy-hml:
+	aws lambda delete-function --function-name hml-$(PROJECT_NAME) --region us-east-1
 
 default: build
