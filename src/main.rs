@@ -1,9 +1,10 @@
-use http_handler::function_handler;
+use router::function_handler;
 use lambda_http::{run, service_fn, tracing, Error};
 
 mod aws;
 mod db;
-mod http_handler;
+mod handlers;
+mod router;
 mod models;
 
 const ENV_VARS: [&str; 5] = [
