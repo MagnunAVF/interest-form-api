@@ -1307,6 +1307,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-cloudwatch",
  "aws-sdk-dynamodb",
+ "base64 0.22.1",
  "chrono",
  "lambda_http",
  "once_cell",

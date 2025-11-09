@@ -1,5 +1,5 @@
+use crate::handlers::{create_interest, get_interests};
 use lambda_http::{http::Method, tracing, Body, Error, Request, Response};
-use crate::handlers::create_interest;
 
 pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
     let method = event.method();
@@ -9,6 +9,7 @@ pub(crate) async fn function_handler(event: Request) -> Result<Response<Body>, E
 
     match (method, path) {
         (&Method::POST, "/interests") => create_interest::handler(event).await,
+        (&Method::GET, "/interests") => get_interests::handler(event).await,
         _ => {
             tracing::info!("Route not found: {} {}", method, path);
             Ok(Response::builder()

@@ -1,6 +1,6 @@
 use crate::{
     db::add_interest,
-    models::{Interest, InterestFormData}
+    models::{Interest, InterestFormData},
 };
 use lambda_http::{tracing, Body, Error, Request, Response};
 
